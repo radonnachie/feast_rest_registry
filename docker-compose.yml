@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    ports:
+      - "80:80"
+    volumes:
+      - .:/work
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: "postgres"
+    healthcheck:
+      test: pg_isready --host db --port 5432 --username feast --dbname feast
+      interval: 2s
+      timeout: 10s
+      retries: 5
+    environment:
+      - POSTGRES_USER=feast
+      - POSTGRES_PASSWORD=feast
+      - POSTGRES_DB=feast
