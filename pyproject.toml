@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cosmic_database"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
   { name="Ross Donnachie", email="code@radonn.co.za" },
 ]
@@ -16,11 +16,10 @@ classifiers = [
     "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
     "Operating System :: OS Independent",
 ]
-dependencies = [
-  "feast",
-  "fastapi",
-  "uvicorn[standard]",
-]
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
 [project.scripts]
-
+feast_rest_registry = "feast_rest_registry:server.cli_start_server"

@@ -1,0 +1,4 @@
+psycopg2
+feast
+fastapi
+uvicorn[standard]
