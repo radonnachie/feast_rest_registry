@@ -2,7 +2,7 @@ import logging
 import traceback
 import argparse
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response, status
 
 from feast_rest_registry import interface
 from feast.errors import FeastObjectNotFoundException
@@ -23,6 +23,10 @@ def get_app(
         engine_path=engine_path,
     )
 
+    @app.get("/health")
+    def health():
+        return Response(status_code=status.HTTP_200_OK)
+
     @app.get("/projects")
     def list_projects() -> interface.ReturnObjectList:
         return registry._list_served_projects()
@@ -34,7 +38,7 @@ def get_app(
         except BaseException as err:
             logger.error(traceback.format_exc())
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
             )
 
@@ -54,7 +58,7 @@ def get_app(
             )
         except BaseException as err:
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
             )
 
@@ -71,11 +75,11 @@ def get_app(
                 name=name,
             )
         except FeastObjectNotFoundException as err:
-            raise HTTPException(status_code=404, detail=str(err))
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
             logger.error(traceback.format_exc())
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
             )
 
@@ -92,11 +96,11 @@ def get_app(
                 name=name
             )
         except FeastObjectNotFoundException as err:
-            raise HTTPException(status_code=404, detail=str(err))
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
             logger.error(traceback.format_exc())
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
             )
 
@@ -111,11 +115,11 @@ def get_app(
                 resource=resource,
             )
         except FeastObjectNotFoundException as err:
-            raise HTTPException(status_code=404, detail=str(err))
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
             logger.error(traceback.format_exc())
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
             )
 
@@ -142,11 +146,11 @@ def get_app(
                 obj=obj_application
             )
         except FeastObjectNotFoundException as err:
-            raise HTTPException(status_code=404, detail=str(err))
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
             logger.error(traceback.format_exc())
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
             )
 
@@ -163,11 +167,11 @@ def get_app(
                 project=project
             )
         except FeastObjectNotFoundException as err:
-            raise HTTPException(status_code=404, detail=str(err))
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
             logger.error(traceback.format_exc())
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
             )
 
@@ -180,11 +184,11 @@ def get_app(
                 project=project
             )
         except FeastObjectNotFoundException as err:
-            raise HTTPException(status_code=404, detail=str(err))
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
             logger.error(traceback.format_exc())
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
             )
 
