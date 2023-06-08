@@ -27,18 +27,18 @@ def get_app(
 
     @app.get("/projects")
     def list_projects(
-        name: Optional[str] = None
+        name_like: Optional[str] = None
     ) -> interface.ReturnStringList:
-        return registry._list_served_projects(name)
+        return registry._list_served_projects(name_like)
 
     @app.get("/resources")
     def list_resources(
         resource: Optional[interface.QueryableResourceType] = None,
-        name: Optional[str] = None
+        name_like: Optional[str] = None
     ) -> interface.ReturnResourceList:
         return registry._list_served_resources(
             resource,
-            name
+            name_like
         )
 
     @app.delete("/teardown")

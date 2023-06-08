@@ -440,15 +440,15 @@ class ServedSqlRegistry(ABC):
             ]
         )
 
-    def _list_served_projects(self, name: Optional[str] = None) -> ReturnStringList:
+    def _list_served_projects(self, name_like: Optional[str] = None) -> ReturnStringList:
         return ReturnStringList(
-            strings=self._get_all_projects(name)
+            strings=self._get_all_projects(name_like)
         )
 
     def _list_served_resources(
         self,
         resource: Optional[QueryableResourceType] = None,
-        name: Optional[str] = None
+        name_like: Optional[str] = None
     ) -> ReturnResourceList:
         resource_types = QueryableResourceType
         if resource is not None:
@@ -462,9 +462,9 @@ class ServedSqlRegistry(ABC):
                 id_field_name, _ = _infer_resource_fields(resource_type.value)
 
                 stmt = select(table)
-                if name is not None:
+                if name_like is not None:
                     stmt = stmt.where(
-                        getattr(table.c, id_field_name).like(f"%{name}%")
+                        getattr(table.c, id_field_name).like(f"%{name_like}%")
                     )
 
                 resources += [
@@ -480,7 +480,7 @@ class ServedSqlRegistry(ABC):
             resources=resources
         )
 
-    def _get_all_projects(self, name: Optional[str] = None) -> Set[str]:
+    def _get_all_projects(self, name_like: Optional[str] = None) -> Set[str]:
         projects = set()
         with self.engine.connect() as conn:
             for table in {
@@ -492,9 +492,9 @@ class ServedSqlRegistry(ABC):
                 feast_sql_registry.stream_feature_views,
             }:
                 stmt = select(table)
-                if name is not None:
+                if name_like is not None:
                     stmt = stmt.where(
-                        getattr(table.c, "project_id").like(f"%{name}%")
+                        getattr(table.c, "project_id").like(f"%{name_like}%")
                     )
                 rows = conn.execute(stmt).all()
                 for row in rows:
