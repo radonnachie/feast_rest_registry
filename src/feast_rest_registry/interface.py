@@ -440,9 +440,9 @@ class ServedSqlRegistry(ABC):
             ]
         )
 
-    def _list_served_projects(self) -> ReturnStringList:
+    def _list_served_projects(self, name: Optional[str] = None) -> ReturnStringList:
         return ReturnStringList(
-            strings=self._get_all_projects()
+            strings=self._get_all_projects(name)
         )
 
     def _list_served_resources(
@@ -480,7 +480,7 @@ class ServedSqlRegistry(ABC):
             resources=resources
         )
 
-    def _get_all_projects(self) -> Set[str]:
+    def _get_all_projects(self, name: Optional[str] = None) -> Set[str]:
         projects = set()
         with self.engine.connect() as conn:
             for table in {
@@ -492,6 +492,10 @@ class ServedSqlRegistry(ABC):
                 feast_sql_registry.stream_feature_views,
             }:
                 stmt = select(table)
+                if name is not None:
+                    stmt = stmt.where(
+                        getattr(table.c, "project_id").like(f"%{name}%")
+                    )
                 rows = conn.execute(stmt).all()
                 for row in rows:
                     projects.add(row["project_id"])

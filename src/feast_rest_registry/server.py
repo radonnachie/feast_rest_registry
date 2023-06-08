@@ -26,8 +26,10 @@ def get_app(
         return Response(status_code=status.HTTP_200_OK)
 
     @app.get("/projects")
-    def list_projects() -> interface.ReturnStringList:
-        return registry._list_served_projects()
+    def list_projects(
+        name: Optional[str] = None
+    ) -> interface.ReturnStringList:
+        return registry._list_served_projects(name)
 
     @app.get("/resources")
     def list_resources(
