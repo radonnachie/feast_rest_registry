@@ -1,3 +1,4 @@
+import logging
 import base64
 from datetime import datetime
 from enum import Enum
@@ -47,6 +48,9 @@ from feast.protos.feast.core.ValidationProfile_pb2 import (
 from feast.repo_config import RegistryConfig
 
 
+logger = logging.getLogger("feast_rest_registry")
+
+
 class PostableResourceType(str, Enum):
     entity = "entity"
     data_source = "data_source"
@@ -82,7 +86,7 @@ class GettableResourceType(str, Enum):
     managed_infra = "managed_infra"
 
 
-class ListableResourceType(str, Enum):
+class QueryableResourceType(str, Enum):
     entity = "entity"
     data_source = "data_source"
     feature_view = "feature_view"
@@ -203,6 +207,20 @@ class ReturnObject(BaseModel):
 
 class ReturnObjectList(BaseModel):
     protostrings: List[str]
+
+
+class ReturnStringList(BaseModel):
+    strings: List[str]
+
+
+class ReturnResource(BaseModel):
+    name: str
+    type: str
+    project: str
+
+
+class ReturnResourceList(BaseModel):
+    resources: List[ReturnResource]
 
 
 class ReturnDatetime(BaseModel):
@@ -341,7 +359,7 @@ class ServedSqlRegistry(ABC):
         raise not_found_exception(name, project)
 
     def _list_served_objects(
-        self, resource: ListableResourceType, project: str
+        self, resource: QueryableResourceType, project: str
     ) -> ReturnObjectList:
         table = _infer_resource_table(resource.value)
         id_field_name, proto_field_name = _infer_resource_fields(resource.value)
@@ -422,12 +440,44 @@ class ServedSqlRegistry(ABC):
             ]
         )
 
-    def _list_served_projects(self) -> ReturnObjectList:
-        return ReturnObjectList(
-            protostrings=[
-                base64.b64encode(project.encode("ascii")).decode("ascii")
-                for project in self._get_all_projects()
-            ]
+    def _list_served_projects(self) -> ReturnStringList:
+        return ReturnStringList(
+            strings=self._get_all_projects()
+        )
+
+    def _list_served_resources(
+        self,
+        resource: Optional[QueryableResourceType] = None,
+        name: Optional[str] = None
+    ) -> ReturnResourceList:
+        resource_types = QueryableResourceType
+        if resource is not None:
+            resource_types = [resource]
+        logger.debug(f"Querying resource_types: {[r.value for r in resource_types]}.")
+
+        resources = []
+        with self.engine.connect() as conn:
+            for resource_type in resource_types:
+                table = _infer_resource_table(resource_type.value)
+                id_field_name, _ = _infer_resource_fields(resource_type.value)
+
+                stmt = select(table)
+                if name is not None:
+                    stmt = stmt.where(
+                        getattr(table.c, id_field_name).like(f"%{name}%")
+                    )
+
+                resources += [
+                    ReturnResource(
+                        name=row[id_field_name],
+                        type=resource_type,
+                        project=row["project_id"]
+                    )
+                    for row in conn.execute(stmt).all()
+                ]
+
+        return ReturnResourceList(
+            resources=resources
         )
 
     def _get_all_projects(self) -> Set[str]:

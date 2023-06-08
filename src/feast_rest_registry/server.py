@@ -1,6 +1,7 @@
 import logging
 import traceback
 import argparse
+from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Response, status
 
@@ -8,9 +9,6 @@ from feast_rest_registry import interface
 from feast.errors import FeastObjectNotFoundException
 
 import uvicorn
-
-
-logger = logging.getLogger("feast_rest_registry")
 
 
 def get_app(
@@ -28,15 +26,25 @@ def get_app(
         return Response(status_code=status.HTTP_200_OK)
 
     @app.get("/projects")
-    def list_projects() -> interface.ReturnObjectList:
+    def list_projects() -> interface.ReturnStringList:
         return registry._list_served_projects()
+
+    @app.get("/resources")
+    def list_resources(
+        resource: Optional[interface.QueryableResourceType] = None,
+        name: Optional[str] = None
+    ) -> interface.ReturnResourceList:
+        return registry._list_served_resources(
+            resource,
+            name
+        )
 
     @app.delete("/teardown")
     def delete_registry():
         try:
             registry.teardown()
         except BaseException as err:
-            logger.error(traceback.format_exc())
+            interface.logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
@@ -77,7 +85,7 @@ def get_app(
         except FeastObjectNotFoundException as err:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
-            logger.error(traceback.format_exc())
+            interface.logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
@@ -98,7 +106,7 @@ def get_app(
         except FeastObjectNotFoundException as err:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
-            logger.error(traceback.format_exc())
+            interface.logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
@@ -107,7 +115,7 @@ def get_app(
     @app.get("/{project}/list")
     def list_resource(
         project: str,
-        resource: interface.ListableResourceType,
+        resource: interface.QueryableResourceType,
     ) -> interface.ReturnObjectList:
         try:
             return registry._list_served_objects(
@@ -117,7 +125,7 @@ def get_app(
         except FeastObjectNotFoundException as err:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
-            logger.error(traceback.format_exc())
+            interface.logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
@@ -148,7 +156,7 @@ def get_app(
         except FeastObjectNotFoundException as err:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
-            logger.error(traceback.format_exc())
+            interface.logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
@@ -169,7 +177,7 @@ def get_app(
         except FeastObjectNotFoundException as err:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
-            logger.error(traceback.format_exc())
+            interface.logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
@@ -186,7 +194,7 @@ def get_app(
         except FeastObjectNotFoundException as err:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(err))
         except BaseException as err:
-            logger.error(traceback.format_exc())
+            interface.logger.error(traceback.format_exc())
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"{err}\n{traceback.format_exc()}"
