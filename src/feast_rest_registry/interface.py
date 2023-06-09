@@ -16,6 +16,7 @@ import feast.infra.registry.sql as feast_sql_registry
 from abc import ABC
 
 from feast.errors import (
+    FeastObjectNotFoundException,
     DataSourceObjectNotFoundException,
     EntityNotFoundException,
     FeatureServiceNotFoundException,
@@ -49,6 +50,13 @@ from feast.repo_config import RegistryConfig
 
 
 logger = logging.getLogger("feast_rest_registry")
+
+
+class ManagedInfraNotFound(FeastObjectNotFoundException):
+    def __init__(self, name: str, project: str):
+        super().__init__(
+            f"Manage infra object {name} does not exist for project {project}"
+        )
 
 
 class PostableResourceType(str, Enum):
@@ -163,7 +171,7 @@ def _infer_resource_not_found_exception(resource: str):
     if resource == "validation_reference":
         return ValidationReferenceNotFound
     if resource == "managed_infra":
-        return RuntimeError
+        return ManagedInfraNotFound
 
     raise ValueError(f"No known not-found excption for resource '{resource}'.")
 
