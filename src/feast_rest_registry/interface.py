@@ -3,7 +3,7 @@ import base64
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Union, Set
+from typing import Dict, List, Optional, Union, Set
 import uuid
 
 from pydantic import BaseModel
@@ -214,6 +214,7 @@ class ReturnObject(BaseModel):
 
 
 class ReturnObjectList(BaseModel):
+    names: List[str]
     protostrings: List[str]
 
 
@@ -265,8 +266,13 @@ class ServedSqlRegistry(ABC):
             feast_sql_registry.request_feature_views,
             feast_sql_registry.saved_datasets,
             feast_sql_registry.validation_references,
+            feast_sql_registry.managed_infra,
+            feast_sql_registry.feast_metadata,
         }:
             with self.engine.connect() as conn:
+                stmt = delete(t).where(
+                    t.c.project_id == self.project
+                )
                 stmt = delete(t)
                 conn.execute(stmt)
 
@@ -376,13 +382,16 @@ class ServedSqlRegistry(ABC):
         with self.engine.connect() as conn:
             stmt = select(table).where(table.c.project_id == project)
             rows = conn.execute(stmt).all()
-            protostrings = []
+            protostrings = {}
             if rows:
-                protostrings = [
-                    base64.b64encode(row[proto_field_name]).decode("ascii")
+                protostrings = {
+                    row[id_field_name]: base64.b64encode(row[proto_field_name]).decode("ascii")
                     for row in rows
-                ]
-        return ReturnObjectList(protostrings=protostrings)
+                }
+        return ReturnObjectList(
+            names=list(protostrings.keys()),
+            protostrings=list(protostrings.values())
+        )
 
     def _apply_served_user_metadata(
         self,
@@ -439,12 +448,17 @@ class ServedSqlRegistry(ABC):
         self,
         project: str,
     ) -> ReturnObjectList:
+        proj_metadata = self.list_project_metadata(project)
         return ReturnObjectList(
+            names=[
+                proj
+                for proj in proj_metadata.keys()
+            ],
             protostrings=[
-                base64.b64encode(proj_metadata.to_proto().SerializeToString()).decode(
+                base64.b64encode(metadata.to_proto().SerializeToString()).decode(
                     "ascii"
                 )
-                for proj_metadata in self.list_project_metadata(project)
+                for metadata in proj_metadata.values()
             ]
         )
 
@@ -510,7 +524,7 @@ class ServedSqlRegistry(ABC):
 
         return projects
 
-    def list_project_metadata(self, project: str) -> List[ProjectMetadata]:
+    def list_project_metadata(self, project: str) -> Dict[str, ProjectMetadata]:
         with self.engine.connect() as conn:
             stmt = select(feast_sql_registry.feast_metadata).where(
                 feast_sql_registry.feast_metadata.c.project_id == project,
@@ -526,8 +540,8 @@ class ServedSqlRegistry(ABC):
                         project_metadata.project_uuid = row["metadata_value"]
                         break
                     # TODO(adchia): Add other project metadata in a structured way
-                return [project_metadata]
-        return []
+                return {project: project_metadata}
+        return {}
 
     def _set_last_updated_metadata(self, last_updated: datetime, project: str):
         with self.engine.connect() as conn:
