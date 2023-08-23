@@ -13,11 +13,9 @@ import uvicorn
 
 def get_app(
         engine_path: str,
-        project_name: str = "feast_servedregistry"
 ):
     app = FastAPI()
     registry = interface.ServedSqlRegistry(
-        project=project_name,
         engine_path=engine_path,
     )
 

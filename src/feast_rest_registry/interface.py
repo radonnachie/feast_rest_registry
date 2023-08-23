@@ -239,7 +239,6 @@ class ReturnDatetime(BaseModel):
 class ServedSqlRegistry(ABC):
     def __init__(
         self,
-        project: str,
         engine_path: Optional[str] = None,
         registry_config: Optional[
             Union[RegistryConfig, feast_sql_registry.SqlRegistryConfig]
@@ -253,8 +252,6 @@ class ServedSqlRegistry(ABC):
 
         self.engine: Engine = create_engine(engine_path, echo=False)
         feast_sql_registry.metadata.create_all(self.engine)
-
-        self.project = project
 
     def teardown(self):
         for t in {
@@ -270,9 +267,6 @@ class ServedSqlRegistry(ABC):
             feast_sql_registry.feast_metadata,
         }:
             with self.engine.connect() as conn:
-                stmt = delete(t).where(
-                    t.c.project_id == self.project
-                )
                 stmt = delete(t)
                 conn.execute(stmt)
 
