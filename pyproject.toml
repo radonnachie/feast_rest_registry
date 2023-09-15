@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "cython"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cosmic_database"
-version = "1.2.2"
+name = "feast_rest_registry"
+version = "1.2.3"
 authors = [
   { name="Ross Donnachie", email="code@radonn.co.za" },
 ]

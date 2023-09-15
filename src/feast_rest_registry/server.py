@@ -77,7 +77,7 @@ def get_app(
         name: str
     ) -> interface.ReturnDeletionCount:
         try:
-            registry._delete_served_object(
+            return registry._delete_served_object(
                 resource=resource,
                 project=project,
                 name=name,
